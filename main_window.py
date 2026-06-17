@@ -76,6 +76,7 @@ class MainWindow(QMainWindow):
             "GM-norm"
         ])
 
+        # Vi gör de två sista kolumnerna ej redigeringsbara.
         for row in range(self.table.rowCount()):
             for col in [5, 6]:
                 item = self.table.item(row, col)
@@ -104,42 +105,103 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.button_widget)
 
     def update_table(self):
+        self.chessplayers.clear()
+
+        valid_titles = {"GM", "IM", "FM", "WGM", "WIM", "WFM"}
+
         for row in range(self.table.rowCount()):
             player = Chessplayer()
 
             def get(col):
                 item = self.table.item(row, col)
-                return item.text() if item else ""
+                return item.text().strip() if item else ""
 
-            player.title = get(0)
-            player.firstname = get(1)
-            player.lastname = get(2)
-            player.club = get(3)
+            # ----- Titel -----
+            title = get(0).upper()
+            if title not in valid_titles:
+                title = ""
+                item = self.table.item(row, 0)
+                if item:
+                    self.table.blockSignals(True)
+                    item.setText("")
+                    self.table.blockSignals(False)
 
+            player.title = title
+
+            # ----- Förnamn -----
+            firstname = get(1)
+
+            if any(ch.isdigit() for ch in firstname):
+                firstname = ""
+                item = self.table.item(row, 1)
+                if item:
+                    self.table.blockSignals(True)
+                    item.setText("")
+                    self.table.blockSignals(False)
+
+            player.firstname = firstname
+
+            # ----- Efternamn -----
+            lastname = get(2)
+
+            if any(ch.isdigit() for ch in lastname):
+                lastname = ""
+                item = self.table.item(row, 2)
+                if item:
+                    self.table.blockSignals(True)
+                    item.setText("")
+                    self.table.blockSignals(False)
+
+            player.lastname = lastname
+
+            # ----- Land -----
+            country = get(3).upper()
+
+            # Exempel: endast 3 bokstäver (SWE, NOR, DEN ...)
+            if country and (len(country) != 3 or not country.isalpha()):
+                country = ""
+                item = self.table.item(row, 3)
+                if item:
+                    self.table.blockSignals(True)
+                    item.setText("")
+                    self.table.blockSignals(False)
+
+            player.club = country
+
+            # ----- Elo -----
             rating_text = get(4)
-            player.rating = int(rating_text) if rating_text.isdigit() else 0
 
-            self.validate_player(player)
-            self.chessplayers.append(player)
+            try:
+                rating = int(rating_text)
+            except ValueError:
+                rating = 0
 
-        if self.chessplayers:
-            print(self.chessplayers[0].title)
+            if not (1400 <= rating <= 3000):
+                rating = 0
+                item = self.table.item(row, 4)
+                if item:
+                    self.table.blockSignals(True)
+                    item.setText("")
+                    self.table.blockSignals(False)
 
-    def validate_player(self, player):
-        valid_titles = {"GM", "IM", "FM", "WGM", "WIM", "WFM"}
-        numbers = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"}
+            player.rating = rating
 
-        if player.title not in valid_titles:
-            player.title = ""
-        if player.firstname in numbers:
-            player.firstname = ""
-        if player.lastname in numbers:
-            player.lastname = ""
-        if not (1400 <= player.rating <= 3000):
-            player.rating = 0
+            # Lägg bara till spelare om raden inte är helt tom
+            if any([
+                player.title,
+                player.firstname,
+                player.lastname,
+                player.club,
+                player.rating
+            ]):
+                self.chessplayers.append(player)
 
     def compute(self):
-        print("compute")
+        if len(self.chessplayers) < 10:
+            print("Not enough players")
+        else:
+            print("Enough players")
 
     def erase(self):
-        print("erase")
+        self.chessplayers.clear()
+        self.table.clearContents()
