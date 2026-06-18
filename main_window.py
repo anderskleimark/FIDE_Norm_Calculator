@@ -9,8 +9,26 @@ from PySide6.QtWidgets import QWidget
 from PySide6.QtWidgets import QVBoxLayout
 from PySide6.QtWidgets import QLabel
 from PySide6.QtWidgets import QPushButton
-from chessplayer import Chessplayer
 from PySide6.QtWidgets import QTableWidgetItem
+from PySide6.QtGui import QColor
+from PySide6.QtWidgets import QFormLayout
+from PySide6.QtWidgets import QLineEdit
+from PySide6.QtWidgets import QSpinBox
+from PySide6.QtWidgets import QCheckBox
+from logic import Logic
+
+# Klass för att hantera objekt av schackspelare.
+
+
+class Chessplayer:
+    def __init__(self):
+        self.firstname = ""
+        self.lastname = ""
+        self.federation = ""
+        self.rating = ""
+        self.title = None
+
+# Klass för GUI
 
 
 class MainWindow(QMainWindow):
@@ -18,7 +36,8 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
 
-        self.chessplayers = []
+        self.chessplayer = Chessplayer()
+        self.opponents = []
         self.central_widget = None  # Centerwidget
         self.button_widget = None  # Widget under tabellen för att göra beräkningar
 
@@ -37,33 +56,59 @@ class MainWindow(QMainWindow):
         self.layout.setContentsMargins(10, 10, 10, 10)
         self.central_widget.setLayout(self.layout)
 
-        self.create_main_header()
+        self.create_player_form()
         self.create_main_table()
         self.create_button_widget()
 
+    # Funktion för att skapa menysystemet.
     def create_menu_system(self):
         menu_bar = self.menuBar()
         # FileMenu
-        file_menu = menu_bar.addMenu("File")
+        file_menu = menu_bar.addMenu("Arkiv")
         exit_action = QAction("Quit", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
-    def create_main_header(self):
-        self.header = QLabel("Players")
-        self.layout.addWidget(self.header)
+    # Funktion för att skapa ett formulär för den spelare, som normberäkningarna gäller.
+    def create_player_form(self):
 
-        # Centrera texten
-        self.header.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.player_widget = QWidget()
+        layout = QGridLayout()
 
-        # Gör texten större och fet
-        font = QFont()
-        font.setPointSize(20)
-        font.setBold(True)
-        self.header.setFont(font)
+        self.player_firstname = QLineEdit()
+        self.player_lastname = QLineEdit()
+        self.player_country = QLineEdit()
+
+        self.player_rating = QSpinBox()
+        self.player_rating.setRange(1400, 3000)
+        self.player_rating.setValue(2000)
+
+        self.federation_requirement = QCheckBox(
+            "Kontrollera federationskravet"
+        )
+        self.federation_requirement.setChecked(True)
+
+        # Rad 0
+        layout.addWidget(QLabel("Förnamn"), 0, 0)
+        layout.addWidget(self.player_firstname, 0, 1)
+
+        layout.addWidget(QLabel("Efternamn"), 0, 2)
+        layout.addWidget(self.player_lastname, 0, 3)
+
+        layout.addWidget(QLabel("Land"), 0, 4)
+        layout.addWidget(self.player_country, 0, 5)
+
+        # Rad 1
+        layout.addWidget(QLabel("Elo-tal"), 1, 0)
+        layout.addWidget(self.player_rating, 1, 1)
+
+        layout.addWidget(self.federation_requirement, 1, 2, 1, 4)
+
+        self.player_widget.setLayout(layout)
+        self.layout.addWidget(self.player_widget)
 
     def create_main_table(self):
-        self.table = QTableWidget(11, 7)
+        self.table = QTableWidget(11, 5)
         self.layout.addWidget(self.table)
 
         self.table.setHorizontalHeaderLabels([
@@ -72,20 +117,7 @@ class MainWindow(QMainWindow):
             "Efternamn",
             "Land",
             "Elo-tal",
-            "IM-norm",
-            "GM-norm"
         ])
-
-        # Vi gör de två sista kolumnerna ej redigeringsbara.
-        for row in range(self.table.rowCount()):
-            for col in [5, 6]:
-                item = self.table.item(row, col)
-
-                if item is None:
-                    item = QTableWidgetItem()
-                    self.table.setItem(row, col, item)
-
-                item.setFlags(item.flags() & ~Qt.ItemFlag.ItemIsEditable)
 
         # Kolumnerna fyller hela bredden
         self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
@@ -105,7 +137,7 @@ class MainWindow(QMainWindow):
         self.layout.addWidget(self.button_widget)
 
     def update_table(self):
-        self.chessplayers.clear()
+        self.opponents.clear()
 
         valid_titles = {"GM", "IM", "FM", "WGM", "WIM", "WFM"}
 
@@ -194,14 +226,16 @@ class MainWindow(QMainWindow):
                 player.club,
                 player.rating
             ]):
-                self.chessplayers.append(player)
+                self.opponents.append(player)
 
     def compute(self):
-        if len(self.chessplayers) < 10:
+        if len(self.opponents) < 9:
             print("Not enough players")
         else:
+            logic = Logic(self.opponents)
             print("Enough players")
+            print(logic.compute_norm_scores())
 
     def erase(self):
-        self.chessplayers.clear()
+        self.opponents.clear()
         self.table.clearContents()
