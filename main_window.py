@@ -13,7 +13,6 @@ from PySide6.QtWidgets import QTableWidgetItem
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFormLayout
 from PySide6.QtWidgets import QLineEdit
-from PySide6.QtWidgets import QSpinBox
 from PySide6.QtWidgets import QCheckBox
 from logic import Logic
 
@@ -71,17 +70,12 @@ class MainWindow(QMainWindow):
 
     # Funktion för att skapa ett formulär för den spelare, som normberäkningarna gäller.
     def create_player_form(self):
-
         self.player_widget = QWidget()
         layout = QGridLayout()
 
         self.player_firstname = QLineEdit()
         self.player_lastname = QLineEdit()
         self.player_country = QLineEdit()
-
-        self.player_rating = QSpinBox()
-        self.player_rating.setRange(1400, 3000)
-        self.player_rating.setValue(2000)
 
         self.federation_requirement = QCheckBox(
             "Kontrollera federationskravet"
@@ -99,16 +93,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.player_country, 0, 5)
 
         # Rad 1
-        layout.addWidget(QLabel("Elo-tal"), 1, 0)
-        layout.addWidget(self.player_rating, 1, 1)
-
-        layout.addWidget(self.federation_requirement, 1, 2, 1, 4)
+        layout.addWidget(self.federation_requirement, 1, 0, 1, 6)
 
         self.player_widget.setLayout(layout)
         self.layout.addWidget(self.player_widget)
 
     def create_main_table(self):
-        self.table = QTableWidget(11, 5)
+        self.table = QTableWidget(9, 5)
         self.layout.addWidget(self.table)
 
         self.table.setHorizontalHeaderLabels([
@@ -120,7 +111,19 @@ class MainWindow(QMainWindow):
         ])
 
         # Kolumnerna fyller hela bredden
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.Stretch
+        )
+
+        # Visa alltid plats för 9 rader
+        visible_rows = 10
+        row_height = self.table.verticalHeader().defaultSectionSize()
+        header_height = self.table.horizontalHeader().height()
+
+        self.table.setFixedHeight(
+            header_height + visible_rows * row_height + 2
+        )
+
         self.table.itemChanged.connect(self.update_table)
 
     def create_button_widget(self):
@@ -232,7 +235,7 @@ class MainWindow(QMainWindow):
         if len(self.opponents) < 9:
             print("Not enough players")
         else:
-            logic = Logic(self.opponents)
+            logic = Logic(self.opponents, self.player_country)
             print("Enough players")
             print(logic.compute_norm_scores())
 

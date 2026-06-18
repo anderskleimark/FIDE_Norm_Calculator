@@ -26,13 +26,30 @@ class Logic:
 
                 ]
 
-    def __init__(self, chessplayers):
-        self.chessplayers = chessplayers
+    def __init__(self, opponents, player_federation):
+        self.opponents = opponents
+        self.player_federation = player_federation
 
-    # Funktion för att få fram det lägsta elo-talet av motståndarna.
+    def get_federation_requirement_status(self):
+        federations = []
+        number_of_foreign_federations = 0
+        number_of_players_from_same_federation = 0
+
+        for opponent in self.opponents:
+            if not opponent.federation in federations:
+                federations.append(opponent.federation)
+            if self.player_federation == opponent.federation:
+                number_of_players_from_same_federation += 1
+            else:
+                number_of_foreign_federations += 1
+
+        return len(federations) > 2 and number_of_players_from_same_federation <= math.floor(0.6 * len(self.opponents)) and number_of_foreign_federations <= math.floor(2*len(self.opponents)/3)
+
+        # Funktion för att få fram det lägsta elo-talet av motståndarna.
+
     def get_minimum_opponent_rating(self):
         minimum = 3000
-        for player in self.chessplayers:
+        for player in self.opponents:
             if player.rating < minimum:
                 minimum = player.rating
 
@@ -40,35 +57,42 @@ class Logic:
 
     def compute_da(self, norm_type):
         rating_sum = 0
-        for player in self.chessplayers:
-            if self.get_minimum_opponent_rating() == player.rating:
-                if norm_type == "GM":
-                    rating += 2200
-                elif norm_type == "IM":
-                    rating += 2050
+        min_rating = self.get_minimum_opponent_rating()
+
+        replaced = False
+
+        for player in self.opponents:
+            if player.rating == min_rating and not replaced:
+                replaced = True
+                rating_sum += 2200 if norm_type == "GM" else 2050
             else:
                 rating_sum += player.rating
 
-        return rating_sum / len(self.chessplayers)
+        return rating_sum / len(self.opponents)
 
     def compute_norm_scores(self):
-        da_gm = self.compute_da("GM")
         da_im = self.compute_da("IM")
-        games = len(self.chessplayers)
+        da_gm = self.compute_da("GM")
+        games = len(self.opponents)
 
         im_points = None
         gm_points = None
 
-        # IM-norm
         if da_im >= 2230:
             for score, dp in self.dp_table:
                 if da_im + dp >= 2450:
                     im_points = score * games
+                else:
+                    break  # viktigt: när det slutar uppfylla villkoret
 
-        # GM-norm
         if da_gm >= 2380:
             for score, dp in self.dp_table:
                 if da_gm + dp >= 2600:
                     gm_points = score * games
+                else:
+                    break
 
-        return math.ceil(im_points * 2) / 2, math.ceil(gm_points * 2) / 2
+        def safe(x):
+            return None if x is None else math.ceil(x * 2) / 2
+
+        return safe(im_points), safe(gm_points)
