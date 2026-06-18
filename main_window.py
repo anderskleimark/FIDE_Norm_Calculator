@@ -7,6 +7,7 @@ from PySide6.QtWidgets import QMainWindow
 from PySide6.QtWidgets import QTableWidget
 from PySide6.QtWidgets import QWidget
 from PySide6.QtWidgets import QVBoxLayout
+from PySide6.QtWidgets import QHBoxLayout
 from PySide6.QtWidgets import QLabel
 from PySide6.QtWidgets import QPushButton
 from PySide6.QtWidgets import QTableWidgetItem
@@ -44,6 +45,10 @@ class MainWindow(QMainWindow):
         self.resize(800, 600)
         self.create_menu_system()
 
+        # QLabel
+        self.im_norm_score_label = None
+        self.gm_norm_score_label = None
+
         # Knappar
         self.compute_button = None
         self.erase_button = None
@@ -57,6 +62,7 @@ class MainWindow(QMainWindow):
 
         self.create_player_form()
         self.create_main_table()
+        self.create_score_labels()
         self.create_button_widget()
 
     # Funktion för att skapa menysystemet.
@@ -125,6 +131,16 @@ class MainWindow(QMainWindow):
         )
 
         self.table.itemChanged.connect(self.update_table)
+
+    def create_score_labels(self):
+        widget = QWidget()
+        widget_layout = QHBoxLayout()
+        widget.setLayout(widget_layout)
+        self.im_norm_score_label = QLabel("IM-norm: ")
+        self.gm_norm_score_label = QLabel("GM-norm: ")
+        widget_layout.addWidget(self.im_norm_score_label)
+        widget_layout.addWidget(self.gm_norm_score_label)
+        self.layout.addWidget(widget)
 
     def create_button_widget(self):
         self.button_widget = QWidget()
@@ -237,7 +253,16 @@ class MainWindow(QMainWindow):
         else:
             logic = Logic(self.opponents, self.player_country)
             print("Enough players")
-            print(logic.compute_norm_scores())
+            # Uppdatering av normetiketterna.
+            scores = logic.compute_norm_scores()
+            if scores[0] is None:
+                self.im_norm_score_label.setText("IM-norm: -")
+            else:
+                self.im_norm_score_label.setText(f"IM-norm: {scores[0]}")
+            if scores[1] is None:
+                self.gm_norm_score_label.setText("GM-norm: -")
+            else:
+                self.gm_norm_score_label.setText(f"GM-norm: {scores[1]}")
 
     def erase(self):
         self.opponents.clear()
