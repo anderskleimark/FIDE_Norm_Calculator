@@ -16,6 +16,7 @@ from PySide6.QtWidgets import QFormLayout
 from PySide6.QtWidgets import QLineEdit
 from PySide6.QtWidgets import QCheckBox
 from PySide6.QtWidgets import QSpinBox
+from PySide6.QtWidgets import QMessageBox
 from logic import Logic
 
 # Klass för att hantera objekt av schackspelare.
@@ -265,10 +266,13 @@ class MainWindow(QMainWindow):
     # Funktion för att beräkna normkraven.
     def compute(self):
         if len(self.opponents) < 9:
+            QMessageBox.warning(self,
+                                "Fel",
+                                "Inte tillräckligt med motståndare."
+                                )
             print("Not enough players")
         else:
             logic = Logic(self.opponents, self.player_country)
-            print("Enough players")
             # Uppdatering av normetiketterna.
             scores = logic.compute_norm_scores()
             if scores[0] is None:
