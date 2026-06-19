@@ -15,6 +15,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import QFormLayout
 from PySide6.QtWidgets import QLineEdit
 from PySide6.QtWidgets import QCheckBox
+from PySide6.QtWidgets import QSpinBox
 from logic import Logic
 
 # Klass för att hantera objekt av schackspelare.
@@ -83,6 +84,13 @@ class MainWindow(QMainWindow):
         self.player_lastname = QLineEdit()
         self.player_country = QLineEdit()
 
+        self.number_of_opponents = QSpinBox()
+        self.number_of_opponents.setRange(9, 14)
+        self.number_of_opponents.setValue(9)
+        self.number_of_opponents.valueChanged.connect(
+            self.update_number_of_opponents
+        )
+
         self.federation_requirement = QCheckBox(
             "Kontrollera federationskravet"
         )
@@ -99,7 +107,10 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.player_country, 0, 5)
 
         # Rad 1
-        layout.addWidget(self.federation_requirement, 1, 0, 1, 6)
+        layout.addWidget(QLabel("Antal motståndare"), 1, 0)
+        layout.addWidget(self.number_of_opponents, 1, 1)
+
+        layout.addWidget(self.federation_requirement, 1, 2, 1, 4)
 
         self.player_widget.setLayout(layout)
         self.layout.addWidget(self.player_widget)
@@ -273,3 +284,7 @@ class MainWindow(QMainWindow):
     def erase(self):
         self.opponents.clear()
         self.table.clearContents()
+
+    # Funktion för att uppdatera tabellen, så att den motsvarar antal motståndare.
+    def update_number_of_opponents(self, value):
+        self.table.setRowCount(value)
