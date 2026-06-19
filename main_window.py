@@ -222,18 +222,18 @@ class MainWindow(QMainWindow):
             player.lastname = lastname
 
             # ----- Land -----
-            country = get(3).upper()
+            federation = get(3).upper()
 
             # Exempel: endast 3 bokstäver (SWE, NOR, DEN ...)
-            if country and (len(country) != 3 or not country.isalpha()):
-                country = ""
+            if federation and (len(federation) != 3 or not federation.isalpha()):
+                federation = ""
                 item = self.table.item(row, 3)
                 if item:
                     self.table.blockSignals(True)
                     item.setText("")
                     self.table.blockSignals(False)
 
-            player.club = country
+            player.federation = federation
 
             # ----- Elo -----
             rating_text = get(4)
@@ -258,7 +258,7 @@ class MainWindow(QMainWindow):
                 player.title,
                 player.firstname,
                 player.lastname,
-                player.club,
+                player.federation,
                 player.rating
             ]):
                 self.opponents.append(player)

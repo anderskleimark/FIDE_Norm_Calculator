@@ -50,7 +50,10 @@ class Logic:
     def get_minimum_opponent_rating(self):
         minimum = None
         for player in self.opponents:
-            if (player.rating is None) or (player.rating < minimum):
+            if player.rating is None:
+                continue
+
+            if minimum is None or player.rating < minimum:
                 minimum = player.rating
 
         return minimum
