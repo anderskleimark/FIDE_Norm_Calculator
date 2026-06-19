@@ -104,6 +104,7 @@ class MainWindow(QMainWindow):
         self.player_widget.setLayout(layout)
         self.layout.addWidget(self.player_widget)
 
+    # Funktion för att skapa tabellen med motståndarna.
     def create_main_table(self):
         self.table = QTableWidget(9, 5)
         self.layout.addWidget(self.table)
@@ -132,6 +133,7 @@ class MainWindow(QMainWindow):
 
         self.table.itemChanged.connect(self.update_table)
 
+    # Funktion för att skapa etiketter för hur många poäng som krävs för normerna.
     def create_score_labels(self):
         widget = QWidget()
         widget_layout = QHBoxLayout()
@@ -142,6 +144,7 @@ class MainWindow(QMainWindow):
         widget_layout.addWidget(self.gm_norm_score_label)
         self.layout.addWidget(widget)
 
+    # Funktion för att skapa knappar för beräkning med mera.
     def create_button_widget(self):
         self.button_widget = QWidget()
         layout = QGridLayout()
@@ -155,6 +158,7 @@ class MainWindow(QMainWindow):
 
         self.layout.addWidget(self.button_widget)
 
+    # Funktion som uppdaterar tabellen.
     def update_table(self):
         self.opponents.clear()
 
@@ -247,6 +251,7 @@ class MainWindow(QMainWindow):
             ]):
                 self.opponents.append(player)
 
+    # Funktion för att beräkna normkraven.
     def compute(self):
         if len(self.opponents) < 9:
             print("Not enough players")
@@ -264,6 +269,7 @@ class MainWindow(QMainWindow):
             else:
                 self.gm_norm_score_label.setText(f"GM-norm: {scores[1]}")
 
+    # Funktion för att rensa formuläret.
     def erase(self):
         self.opponents.clear()
         self.table.clearContents()

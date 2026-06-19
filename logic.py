@@ -30,6 +30,7 @@ class Logic:
         self.opponents = opponents
         self.player_federation = player_federation
 
+    # Funktion för att kontrollera om federationskraven är uppfyllda.
     def get_federation_requirement_status(self):
         federations = []
         number_of_foreign_federations = 0
@@ -45,16 +46,17 @@ class Logic:
 
         return len(federations) > 2 and number_of_players_from_same_federation <= math.floor(0.6 * len(self.opponents)) and number_of_foreign_federations <= math.floor(2*len(self.opponents)/3)
 
-        # Funktion för att få fram det lägsta elo-talet av motståndarna.
-
+    # Funktion för att få fram det lägsta elo-talet av motståndarna.
     def get_minimum_opponent_rating(self):
-        minimum = 3000
+        minimum = None
         for player in self.opponents:
-            if player.rating < minimum:
+            if (player.rating is None) or (player.rating < minimum):
                 minimum = player.rating
 
         return minimum
 
+    # Funktion för att beräkna medelrankingen för motståndarna. Om det lägsta elo-talet är lägre
+    # än 2050/2200 höjs det enligt reglerna.
     def compute_da(self, norm_type):
         rating_sum = 0
         min_rating = self.get_minimum_opponent_rating()
@@ -70,6 +72,7 @@ class Logic:
 
         return rating_sum / len(self.opponents)
 
+    # Funktion för att beräkna hur många poäng i tävlingen som krävs för IM- och GM-norm.
     def compute_norm_scores(self):
         da_im = self.compute_da("IM")
         da_gm = self.compute_da("GM")
