@@ -87,6 +87,10 @@ class MainWindow(QMainWindow):
         self.player_lastname = QLineEdit()
         self.player_country = QLineEdit()
 
+        self.player_rating = QSpinBox()
+        self.player_rating.setRange(1000, 3000)
+        self.player_rating.setValue(2000)
+
         self.number_of_opponents = QSpinBox()
         self.number_of_opponents.setRange(9, 14)
         self.number_of_opponents.setValue(9)
@@ -110,10 +114,13 @@ class MainWindow(QMainWindow):
         layout.addWidget(self.player_country, 0, 5)
 
         # Rad 1
-        layout.addWidget(QLabel("Antal motståndare"), 1, 0)
-        layout.addWidget(self.number_of_opponents, 1, 1)
+        layout.addWidget(QLabel("Elo-tal"), 1, 0)
+        layout.addWidget(self.player_rating, 1, 1)
 
-        layout.addWidget(self.federation_requirement, 1, 2, 1, 4)
+        layout.addWidget(QLabel("Antal motståndare"), 1, 2)
+        layout.addWidget(self.number_of_opponents, 1, 3)
+
+        layout.addWidget(self.federation_requirement, 1, 4, 1, 2)
 
         self.player_widget.setLayout(layout)
         self.layout.addWidget(self.player_widget)
@@ -148,6 +155,7 @@ class MainWindow(QMainWindow):
         self.table.itemChanged.connect(self.update_table)
 
     # Funktion för att skapa etiketter för hur många poäng som krävs för normerna.
+    # Även den förväntade poängsumman visas här.
     def create_score_labels(self):
         widget = QWidget()
         layout = QGridLayout()
@@ -156,10 +164,12 @@ class MainWindow(QMainWindow):
         # Rubriker
         layout.addWidget(QLabel("IM-norm:"), 0, 0)
         layout.addWidget(QLabel("GM-norm:"), 1, 0)
+        layout.addWidget(QLabel("E(X):"), 2, 0)
 
         # Värden
         self.im_norm_score_label = QLabel("-")
         self.gm_norm_score_label = QLabel("-")
+        self.expected_score_label = QLabel("-")
 
         self.im_norm_score_label.setFrameStyle(
             QFrame.Shape.Box | QFrame.Shadow.Sunken
@@ -167,12 +177,17 @@ class MainWindow(QMainWindow):
         self.gm_norm_score_label.setFrameStyle(
             QFrame.Shape.Box | QFrame.Shadow.Sunken
         )
+        self.expected_score_label.setFrameStyle(
+            QFrame.Shape.Box | QFrame.Shadow.Sunken
+        )
 
         self.im_norm_score_label.setMinimumWidth(60)
         self.gm_norm_score_label.setMinimumWidth(60)
+        self.expected_score_label.setMinimumWidth(60)
 
         layout.addWidget(self.im_norm_score_label, 0, 1)
         layout.addWidget(self.gm_norm_score_label, 1, 1)
+        layout.addWidget(self.expected_score_label, 2, 1)
 
         self.layout.addWidget(widget)
 
@@ -292,7 +307,7 @@ class MainWindow(QMainWindow):
                                 )
             print("Not enough players")
         else:
-            logic = Logic(self.opponents, self.player_country,
+            logic = Logic(self.opponents, self.player_country, self.player_rating.value(),
                           self.federation_requirement.isChecked())
             # Uppdatering av normetiketterna.
             scores = logic.compute_norm_scores()
@@ -304,6 +319,9 @@ class MainWindow(QMainWindow):
                 self.gm_norm_score_label.setText("-")
             else:
                 self.gm_norm_score_label.setText(str(scores[1]))
+
+            expected = logic.compute_expected_points()
+            self.expected_score_label.setText(f"{expected:.2f}")
 
     # Funktion för att rensa formuläret.
     def erase(self):

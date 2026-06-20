@@ -26,9 +26,10 @@ class Logic:
 
                 ]
 
-    def __init__(self, opponents, player_federation, federation_requirements):
+    def __init__(self, opponents, player_federation, player_rating, federation_requirements):
         self.opponents = opponents
         self.player_federation = player_federation
+        self.player_rating = player_rating
         self.federation_requirements = federation_requirements
 
     # Funktion för att kontrollera om federationskraven är uppfyllda.
@@ -145,3 +146,20 @@ class Logic:
             return None if x is None else math.ceil(x * 2) / 2
 
         return safe(im_points), safe(gm_points)
+
+    # Funktion för att beräkna den förväntade poängsumman.
+    def compute_expected_points(self):
+        expected_points = 0.0
+
+        for opponent in self.opponents:
+            rating_a = self.player_rating
+            rating_b = opponent.rating
+
+            diff = rating_b - rating_a
+
+            # Begränsa skillnaden till ±400
+            diff = max(-400, min(400, diff))
+
+            expected_points += 1 / (1 + 10 ** (diff / 400))
+
+        return expected_points
