@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QLineEdit
 from PySide6.QtWidgets import QCheckBox
 from PySide6.QtWidgets import QSpinBox
 from PySide6.QtWidgets import QMessageBox
+from PySide6.QtWidgets import QFrame
 from logic import Logic
 
 # Klass för att hantera objekt av schackspelare.
@@ -62,6 +63,7 @@ class MainWindow(QMainWindow):
         self.layout.setContentsMargins(10, 10, 10, 10)
         self.central_widget.setLayout(self.layout)
 
+        # Byggandet av GUI
         self.create_player_form()
         self.create_main_table()
         self.create_score_labels()
@@ -72,7 +74,7 @@ class MainWindow(QMainWindow):
         menu_bar = self.menuBar()
         # FileMenu
         file_menu = menu_bar.addMenu("Arkiv")
-        exit_action = QAction("Quit", self)
+        exit_action = QAction("Avsluta", self)
         exit_action.triggered.connect(self.close)
         file_menu.addAction(exit_action)
 
@@ -148,12 +150,30 @@ class MainWindow(QMainWindow):
     # Funktion för att skapa etiketter för hur många poäng som krävs för normerna.
     def create_score_labels(self):
         widget = QWidget()
-        widget_layout = QHBoxLayout()
-        widget.setLayout(widget_layout)
-        self.im_norm_score_label = QLabel("IM-norm: ")
-        self.gm_norm_score_label = QLabel("GM-norm: ")
-        widget_layout.addWidget(self.im_norm_score_label)
-        widget_layout.addWidget(self.gm_norm_score_label)
+        layout = QGridLayout()
+        widget.setLayout(layout)
+
+        # Rubriker
+        layout.addWidget(QLabel("IM-norm:"), 0, 0)
+        layout.addWidget(QLabel("GM-norm:"), 1, 0)
+
+        # Värden
+        self.im_norm_score_label = QLabel("-")
+        self.gm_norm_score_label = QLabel("-")
+
+        self.im_norm_score_label.setFrameStyle(
+            QFrame.Shape.Box | QFrame.Shadow.Sunken
+        )
+        self.gm_norm_score_label.setFrameStyle(
+            QFrame.Shape.Box | QFrame.Shadow.Sunken
+        )
+
+        self.im_norm_score_label.setMinimumWidth(60)
+        self.gm_norm_score_label.setMinimumWidth(60)
+
+        layout.addWidget(self.im_norm_score_label, 0, 1)
+        layout.addWidget(self.gm_norm_score_label, 1, 1)
+
         self.layout.addWidget(widget)
 
     # Funktion för att skapa knappar för beräkning med mera.
@@ -272,17 +292,18 @@ class MainWindow(QMainWindow):
                                 )
             print("Not enough players")
         else:
-            logic = Logic(self.opponents, self.player_country)
+            logic = Logic(self.opponents, self.player_country,
+                          self.federation_requirement.isChecked())
             # Uppdatering av normetiketterna.
             scores = logic.compute_norm_scores()
             if scores[0] is None:
-                self.im_norm_score_label.setText("IM-norm: -")
+                self.im_norm_score_label.setText("-")
             else:
-                self.im_norm_score_label.setText(f"IM-norm: {scores[0]}")
+                self.im_norm_score_label.setText(str(scores[0]))
             if scores[1] is None:
-                self.gm_norm_score_label.setText("GM-norm: -")
+                self.gm_norm_score_label.setText("-")
             else:
-                self.gm_norm_score_label.setText(f"GM-norm: {scores[1]}")
+                self.gm_norm_score_label.setText(str(scores[1]))
 
     # Funktion för att rensa formuläret.
     def erase(self):

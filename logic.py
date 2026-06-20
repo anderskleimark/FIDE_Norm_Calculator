@@ -26,20 +26,22 @@ class Logic:
 
                 ]
 
-    def __init__(self, opponents, player_federation):
+    def __init__(self, opponents, player_federation, federation_requirements):
         self.opponents = opponents
         self.player_federation = player_federation
+        self.federation_requirements = federation_requirements
 
     # Funktion för att kontrollera om federationskraven är uppfyllda.
     def get_federation_requirement_status(self):
         federations = []
+        federations.append(self.player_federation.text())
         number_of_foreign_federations = 0
         number_of_players_from_same_federation = 0
 
         for opponent in self.opponents:
             if not opponent.federation in federations:
                 federations.append(opponent.federation)
-            if self.player_federation == opponent.federation:
+            if self.player_federation.text() == opponent.federation:
                 number_of_players_from_same_federation += 1
             else:
                 number_of_foreign_federations += 1
@@ -55,7 +57,6 @@ class Logic:
 
             if minimum is None or player.rating < minimum:
                 minimum = player.rating
-
         return minimum
 
     # Funktion för att beräkna medelrankingen för motståndarna. Om det lägsta elo-talet är lägre
@@ -64,16 +65,57 @@ class Logic:
         rating_sum = 0
         min_rating = self.get_minimum_opponent_rating()
 
+        minimum_allowed = 2200 if norm_type == "GM" else 2050
         replaced = False
 
         for player in self.opponents:
-            if player.rating == min_rating and not replaced:
+            if (
+                not replaced
+                and player.rating == min_rating
+                and player.rating < minimum_allowed
+            ):
+                rating_sum += minimum_allowed
                 replaced = True
-                rating_sum += 2200 if norm_type == "GM" else 2050
             else:
                 rating_sum += player.rating
 
-        return rating_sum / len(self.opponents)
+        da = math.floor(rating_sum / len(self.opponents) + 0.5)
+        return da
+
+    # Funktion som returnerar True om normkraven är uppfyllda. Annars returneras False.
+    def get_title_requirement_status(self, norm_type):
+        opponents = self.opponents
+        n = len(opponents)
+        min_norm_players = math.ceil(n / 3)
+        min_title_players = math.ceil(n * 0.5)
+
+        # 1) minst hälften titelspelare
+        title_players = sum(
+            1 for p in opponents
+            if p.title in {"GM", "IM", "FM", "WGM", "WIM", "WFM"}
+        )
+
+        if title_players < min_title_players:
+            return False
+
+        # 2) normkrav
+        if norm_type == "GM":
+            norm_players = sum(
+                1 for p in opponents
+                if p.title == "GM"
+            )
+
+        elif norm_type == "IM":
+            norm_players = sum(
+                1 for p in opponents
+                if p.title in {"GM", "IM"}
+            )
+
+        else:
+            return False
+
+        # 3) minst 1/3
+        return norm_players >= min_norm_players
 
     # Funktion för att beräkna hur många poäng i tävlingen som krävs för IM- och GM-norm.
     def compute_norm_scores(self):
@@ -81,22 +123,23 @@ class Logic:
         da_gm = self.compute_da("GM")
         games = len(self.opponents)
 
+        if self.federation_requirements and not self.get_federation_requirement_status():
+            return None, None
+
         im_points = None
         gm_points = None
 
-        if da_im >= 2230:
+        if da_im >= 2230 and self.get_title_requirement_status("IM"):
             for score, dp in self.dp_table:
-                if da_im + dp >= 2450:
-                    im_points = score * games
-                else:
-                    break  # viktigt: när det slutar uppfylla villkoret
-
-        if da_gm >= 2380:
-            for score, dp in self.dp_table:
-                if da_gm + dp >= 2600:
-                    gm_points = score * games
-                else:
+                if da_im + dp < 2450:
                     break
+                im_points = score * games
+
+        if da_gm >= 2380 and self.get_title_requirement_status("GM"):
+            for score, dp in self.dp_table:
+                if da_gm + dp < 2600:
+                    break
+                gm_points = score * games
 
         def safe(x):
             return None if x is None else math.ceil(x * 2) / 2
