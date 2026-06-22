@@ -305,7 +305,6 @@ class MainWindow(QMainWindow):
                                 "Fel",
                                 "Inte tillräckligt med motståndare."
                                 )
-            print("Not enough players")
         else:
             logic = Logic(self.opponents, self.player_country, self.player_rating.value(),
                           self.federation_requirement.isChecked())
